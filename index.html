@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pressroom — RSS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<style>
+  :root {
+    --pink: #FF3366;
+    --blue: #0066FF;
+    --yellow: #FFD600;
+    --forest: #0F5132;
+    --ink: #111111;
+    --cream: #FAF7F2;
+    --paper: #FFFFFF;
+    --line: #111111;
+    --muted: #6b6b66;
+    --ink-soft: #3a3833;
+    --placeholder: #e9e4da;
+    --skel: #ece7dd;
+    --skel-border: #e4ddd0;
+    --count-border: #ddd6cc;
+    --hr: #e6dfd2;
+    --code-bg: #111111;
+    --code-fg: #f5f5f0;
+    --code-inline: #efe9dd;
+    --sidebar-w: 248px;
+    --serif: "Fraunces", Georgia, serif;
+    --sans: "Inter", system-ui, sans-serif;
+  }
+
+  [data-theme="dark"] {
+    --pink: #FF5C82;
+    --blue: #4A90FF;
+    --yellow: #FFD600;
+    --forest: #2E9E6B;
+    --ink: #F3EFE7;
+    --cream: #16140F;
+    --paper: #211E17;
+    --line: #F3EFE7;
+    --muted: #9d968a;
+    --ink-soft: #d6cfc2;
+    --placeholder: #2c2922;
+    --skel: #2a2720;
+    --skel-border: #3a362d;
+    --count-border: #3a362d;
+    --hr: #34302a;
+    --code-bg: #0b0a07;
+    --code-fg: #f3efe7;
+    --code-inline: #2f2b23;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--cream);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    transition: background-color .35s ease, color .35s ease;
+  }
+  .topbar, .subheader, .sidebar, .card .thumb, .reader, .modal, .canvas { transition: background-color .35s ease, border-color .35s ease; }
+  button { font-family: inherit; cursor: pointer; }
+  ::selection { background: var(--yellow); color: var(--ink); }
+
+  .meta {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* ============ APP SHELL ============ */
+  #app { display: flex; flex-direction: column; height: 100vh; background: var(--cream); }
+
+  /* ---------- TOP BAR ---------- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 14px 24px;
+    border-bottom: 3px solid var(--ink);
+    background: var(--cream);
+    flex-shrink: 0;
+    z-index: 40;
+  }
+  .subheader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 24px;
+    border-bottom: 2px solid var(--ink);
+    background: var(--cream);
+    flex-shrink: 0;
+    z-index: 39;
+  }
+  .subheader .collapse-btn, .subheader .hamburger { width: 32px; height: 32px; }
+  .brand {
+    font-family: var(--serif);
+    font-weight: 900;
+    font-size: 34px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--pink);
+    margin: 0;
+    white-space: nowrap;
+    cursor: pointer;
+    font-optical-sizing: auto;
+  }
+  .brand .ity { font-style: italic; font-weight: 500; color: var(--ink); }
+  .hamburger {
+    display: none;
+    width: 40px; height: 40px;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .hamburger span { display: block; width: 18px; height: 2px; background: var(--ink); position: relative; }
+  .hamburger span::before, .hamburger span::after { content:""; position:absolute; left:0; width:18px; height:2px; background: var(--ink); }
+  .hamburger span::before { top: -6px; } .hamburger span::after { top: 6px; }
+
+  .collapse-btn {
+    display: flex;
+    width: 42px; height: 42px;
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: transform .12s, box-shadow .12s, background .12s;
+  }
+  .collapse-btn:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--ink); }
+  .collapse-btn svg { width: 19px; height: 19px; }
+  .collapse-btn.is-collapsed { background: var(--ink); color: var(--cream); }
+
+  .chiprow {
+    display: flex; gap: 8px; align-items: center;
+    overflow-x: auto; flex: 1; min-width: 0;
+    scrollbar-width: none;
+    padding: 2px;
+  }
+  .chiprow::-webkit-scrollbar { display: none; }
+  .chip {
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    height: 32px;
+    display: inline-flex; align-items: center;
+    padding: 0 13px;
+    font-weight: 600; font-size: 13px;
+    white-space: nowrap;
+    transition: transform .12s, box-shadow .12s, background .12s;
+  }
+  .chip:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--ink); }
+  .chip.active { background: var(--ink); color: var(--cream); }
+  .chip .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align: middle; }
+
+  .refresh-btn {
+    display: flex; align-items: center; gap: 8px;
+    border: 2px solid var(--ink); background: var(--yellow); color: var(--ink);
+    height: 42px; padding: 0 16px;
+    font-weight: 700; font-size: 13px;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+    transition: transform .12s, box-shadow .12s;
+  }
+  .refresh-btn:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--ink); }
+  .refresh-btn:active { transform: translate(0,0); box-shadow: none; }
+  .refresh-btn svg { width: 16px; height: 16px; }
+  .refresh-btn.spinning svg { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .topbar-tools { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .tb-divider { width: 2px; align-self: stretch; background: var(--ink); margin: 6px 0; flex-shrink: 0; opacity: .18; }
+  .control-group {
+    display: inline-flex; align-items: stretch; height: 42px;
+    border: 2px solid var(--ink); background: var(--paper);
+    flex-shrink: 0; overflow: hidden;
+  }
+  .cg-btn {
+    border: none; background: transparent; color: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 13px; font-weight: 700; font-size: 12.5px; letter-spacing: 0.05em;
+    transition: background .14s, color .14s;
+  }
+  .cg-btn + .cg-btn { border-left: 2px solid var(--ink); }
+  .cg-btn.lang { color: var(--muted); }
+  .cg-btn.lang.on { background: var(--ink); color: var(--cream); }
+  .cg-btn.lang:not(.on):hover { background: var(--cream); color: var(--ink); }
+  .cg-btn.icon { padding: 0 12px; }
+  .cg-btn.icon:hover { background: var(--cream); }
+  .cg-btn.icon svg { width: 18px; height: 18px; }
+
+  .body-wrap { display: flex; flex: 1; min-height: 0; }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar {
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    border-right: 3px solid var(--ink);
+    background: var(--paper);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    transition: margin-left .28s cubic-bezier(.4,0,.2,1);
+  }
+  .sidebar.collapsed { margin-left: calc(-1 * var(--sidebar-w) - 3px); }
+  .sb-scroll { flex: 1; overflow-y: auto; padding: 18px 14px 8px; }
+  .sb-section-label {
+    color: var(--muted);
+    padding: 0 8px 8px;
+    margin-top: 6px;
+  }
+  .sb-section-label.spaced { margin-top: 22px; display:flex; justify-content: space-between; align-items:center; }
+  .sb-mini-add {
+    border: none; background: none; color: var(--blue);
+    font-weight: 700; font-size: 11px; letter-spacing: .08em;
+    text-transform: uppercase; padding: 2px 4px;
+  }
+  .sb-mini-add:hover { color: var(--pink); }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 8px;
+    font-weight: 600; font-size: 14px;
+    color: var(--ink);
+    border: 2px solid transparent;
+    transition: background .12s, border-color .12s;
+    position: relative;
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--cream); }
+  .nav-item.active { border-color: var(--ink); background: var(--cream); }
+  .nav-item .ni-icon { width: 17px; height: 17px; flex-shrink: 0; }
+  .nav-item .ni-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nav-item .ni-count {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    background: var(--cream); padding: 1px 7px; border: 1.5px solid var(--count-border);
+    min-width: 20px; text-align: center;
+  }
+  .nav-item.active .ni-count { background: var(--paper); }
+  .cat-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid rgba(0,0,0,.25); }
+  .cat-edit {
+    opacity: 0; border: none; background: none; padding: 2px 4px;
+    color: var(--muted); font-size: 14px; line-height: 1;
+  }
+  .nav-item:hover .cat-edit { opacity: 1; }
+  .cat-edit:hover { color: var(--ink); }
+
+  /* feeds list under categories */
+  .feed-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px 6px 14px;
+    font-size: 12.5px; color: var(--muted);
+    position: relative;
+  }
+  .feed-item:hover { color: var(--ink); }
+  .feed-item img { width: 15px; height: 15px; border-radius: 2px; flex-shrink: 0; background:#eee; }
+  .feed-item .fi-name { flex:1; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; }
+  .feed-item .err-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--pink);
+    flex-shrink: 0; cursor: help;
+  }
+  .feed-item .fi-menu-btn {
+    opacity: 0; border:none; background:none; color: var(--muted);
+    font-size: 16px; line-height: 1; padding: 0 2px;
+  }
+  .feed-item:hover .fi-menu-btn { opacity: 1; }
+
+  .sidebar-foot {
+    flex-shrink: 0;
+    border-top: 3px solid var(--ink);
+    padding: 12px 14px;
+    display: flex; gap: 10px; align-items: stretch;
+  }
+  .sidebar-cg { flex: 1; height: 44px; }
+  .sidebar-cg .cg-btn.lang { flex: 1 1 0; }
+  .sidebar-foot .theme-sb { width: 48px; height: 44px; flex-shrink: 0; }
+
+  /* ---------- MAIN CANVAS ---------- */
+  .canvas {
+    flex: 1; overflow-y: auto;
+    padding: 34px 40px 80px;
+    position: relative;
+  }
+  .canvas-head { margin-bottom: 26px; display:flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .canvas-title {
+    font-family: var(--serif); font-weight: 900;
+    font-size: 52px; line-height: .92; letter-spacing: -0.025em;
+    margin: 0; max-width: 70%;
+  }
+  .canvas-sub { color: var(--muted); font-weight: 600; font-size: 13px; letter-spacing: .04em; margin-top: 10px; }
+  .canvas-rule { height: 0; border: none; border-top: 3px solid var(--ink); margin: 0 0 28px; }
+
+  /* grid */
+  .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 26px; }
+
+  .card { cursor: pointer; position: relative; }
+  .card .thumb {
+    width: 100%; background: var(--placeholder) no-repeat center/cover;
+    border: 2px solid var(--ink); overflow: hidden; position: relative;
+    transition: transform .16s, box-shadow .16s;
+  }
+  .card .thumb::after {
+    content:""; position:absolute; inset:0; background: var(--accent); mix-blend-mode: multiply; opacity: 0; transition: opacity .18s;
+  }
+  .card:hover .thumb { transform: translate(-3px,-3px); box-shadow: 7px 7px 0 var(--accent); }
+  .card:hover .thumb::after { opacity: .12; }
+  .card .kicker { margin: 12px 0 6px; display:flex; align-items:center; gap:8px; flex-wrap: wrap; }
+  .tag-pill {
+    font-family: var(--sans); font-weight: 700; font-size: 10.5px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: #fff; background: var(--accent); padding: 3px 8px;
+  }
+  .src-meta { color: var(--muted); }
+  .card h3 {
+    font-family: var(--serif); font-weight: 600; margin: 0;
+    line-height: 1.04; letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .card:hover h3 { color: var(--accent); }
+  .card .excerpt { color: var(--ink-soft); font-size: 14px; line-height: 1.5; margin: 9px 0 0; }
+  .card .byline { margin-top: 10px; color: var(--muted); }
+  .card.is-read h3 { color: var(--muted); }
+  .card.is-read .thumb { opacity: .62; }
+
+  .star-btn {
+    position: absolute; top: 8px; right: 8px; z-index: 3;
+    width: 34px; height: 34px; border: 2px solid var(--ink);
+    background: var(--paper); display:flex; align-items:center; justify-content:center;
+    opacity: 0; transform: scale(.9); transition: opacity .14s, transform .14s, background .14s;
+  }
+  .card:hover .star-btn, .star-btn.on { opacity: 1; transform: scale(1); }
+  .star-btn svg { width: 17px; height: 17px; }
+  .star-btn.on { background: var(--yellow); }
+
+  /* layout spans */
+  .card.hero { grid-column: span 4; grid-row: span 2; }
+  .card.hero .thumb { aspect-ratio: 16/9; }
+  .card.hero h3 { font-size: 46px; }
+  .card.hero .excerpt { font-size: 16px; max-width: 60ch; }
+  .card.side { grid-column: span 2; }
+  .card.side .thumb { aspect-ratio: 4/3; }
+  .card.side h3 { font-size: 21px; }
+  .card.sec { grid-column: span 2; }
+  .card.sec .thumb { aspect-ratio: 3/2; }
+  .card.sec h3 { font-size: 23px; }
+  .card.wide { grid-column: span 3; }
+  .card.wide .thumb { aspect-ratio: 2/1; }
+  .card.wide h3 { font-size: 26px; }
+  .card.text { grid-column: span 2; border-left: 4px solid var(--accent); padding-left: 16px; }
+  .card.text h3 { font-size: 22px; }
+  .card.small { grid-column: span 2; }
+  .card.small .thumb { aspect-ratio: 1/1; }
+  .card.small h3 { font-size: 19px; }
+
+  /* quote pull-out */
+  .card.quote {
+    grid-column: span 3; background: var(--accent); color: #fff;
+    border: 2px solid var(--ink); padding: 28px 30px;
+    display: flex; flex-direction: column; justify-content: center;
+    box-shadow: 6px 6px 0 var(--ink);
+    transition: transform .16s;
+  }
+  .card.quote:hover { transform: translate(-2px,-2px); }
+  .card.quote .qmark { font-family: var(--serif); font-weight: 900; font-size: 64px; line-height: .5; margin-bottom: 6px; }
+  .card.quote h3 { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 28px; color: #fff; line-height: 1.18; }
+  .card.quote:hover h3 { color: #fff; }
+  .card.quote .byline { color: rgba(255,255,255,.85); margin-top: 16px; }
+  .card.quote.lite { color: var(--ink); }
+  .card.quote.lite h3, .card.quote.lite .qmark { color: var(--ink); }
+  .card.quote.lite .byline { color: rgba(0,0,0,.6); }
+
+  /* skeleton */
+  .skel { grid-column: span 2; }
+  .skel.big { grid-column: span 4; grid-row: span 2; }
+  .skel .sk-img { width: 100%; aspect-ratio: 3/2; border:2px solid var(--skel-border); background:var(--skel); }
+  .skel.big .sk-img { aspect-ratio: 16/9; }
+  .sk-line { height: 14px; background: var(--skel); margin-top: 10px; }
+  .sk-line.w70 { width: 70%; } .sk-line.w40 { width: 40%; }
+  .skeleton-anim { position: relative; overflow: hidden; }
+  .skeleton-anim::after {
+    content:""; position:absolute; inset:0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent);
+    transform: translateX(-100%); animation: shimmer 1.3s infinite;
+  }
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
+
+  /* ---------- EMPTY STATE ---------- */
+  .empty {
+    text-align: center; max-width: 460px; margin: 6vh auto 0;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .empty h2 { font-family: var(--serif); font-weight: 900; font-size: 40px; margin: 28px 0 10px; line-height: 1; }
+  .empty p { color: var(--muted); font-size: 15px; line-height: 1.5; margin: 0 0 26px; max-width: 36ch; }
+  .empty .cta {
+    border: 2px solid var(--ink); background: var(--pink); color: #fff;
+    padding: 14px 26px; font-weight: 700; font-size: 15px;
+    box-shadow: 5px 5px 0 var(--ink); transition: transform .14s, box-shadow .14s;
+  }
+  .empty .cta:hover { transform: translate(-2px,-2px); box-shadow: 7px 7px 0 var(--ink); }
+
+  /* ---------- FAB ---------- */
+  .fab {
+    position: fixed; bottom: 28px; right: 28px; z-index: 50;
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--pink); border: 3px solid var(--ink);
+    color: #fff; font-size: 34px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform .15s, box-shadow .15s, background .15s;
+  }
+  .fab:hover { transform: translate(-2px,-2px) rotate(90deg); box-shadow: 7px 7px 0 var(--ink); background: var(--blue); }
+  .fab:active { transform: translate(0,0); box-shadow: 2px 2px 0 var(--ink); }
+
+  /* ---------- OVERLAYS ---------- */
+  .scrim {
+    position: fixed; inset: 0; background: rgba(17,17,17,.45);
+    z-index: 60; opacity: 0; pointer-events: none; transition: opacity .25s;
+  }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+
+  /* reader pane */
+  .reader {
+    position: fixed; top: 0; right: 0; height: 100vh; z-index: 70;
+    width: min(720px, 92vw); background: var(--paper);
+    border-left: 3px solid var(--ink);
+    transform: translateX(105%); transition: transform .32s cubic-bezier(.4,0,.2,1);
+    display: flex; flex-direction: column;
+    box-shadow: -12px 0 40px rgba(17,17,17,.18);
+  }
+  .reader.show { transform: translateX(0); }
+  .reader-bar {
+    flex-shrink: 0; display: flex; align-items: center; gap: 12px;
+    padding: 14px 22px; border-bottom: 3px solid var(--ink); background: var(--cream);
+  }
+  .reader-bar .rb-spacer { flex: 1; }
+  .icon-btn {
+    width: 40px; height: 40px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .12s, box-shadow .12s, background .12s;
+  }
+  .icon-btn:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--ink); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .icon-btn.star.on { background: var(--yellow); }
+  .reader-scroll { flex: 1; overflow-y: auto; padding: 40px clamp(24px,6vw,64px) 80px; }
+  .reader-kicker { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  .reader h1 {
+    font-family: var(--serif); font-weight: 900; font-size: clamp(30px, 4.6vw, 50px);
+    line-height: 1.02; letter-spacing: -0.02em; margin: 0 0 18px; text-wrap: balance;
+  }
+  .reader-byline { color: var(--muted); font-size: 14px; margin-bottom: 24px; padding-bottom: 22px; border-bottom: 2px solid var(--ink); }
+  .reader-hero { width: 100%; border: 2px solid var(--ink); margin-bottom: 28px; display:block; }
+  .article { font-size: 18px; line-height: 1.68; color: var(--ink-soft); max-width: 70ch; }
+  .article p { margin: 0 0 1.15em; }
+  .article a { color: var(--blue); text-underline-offset: 3px; }
+  .article h1, .article h2, .article h3 { font-family: var(--serif); line-height: 1.15; margin: 1.6em 0 .5em; }
+  .article h2 { font-size: 28px; font-weight: 600; }
+  .article h3 { font-size: 22px; font-weight: 600; }
+  .article img { max-width: 100%; height: auto; border: 2px solid var(--ink); margin: 1.2em 0; display:block; }
+  .article figure { margin: 1.2em 0; }
+  .article figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .article blockquote {
+    margin: 1.4em 0; padding: 6px 0 6px 24px; border-left: 5px solid var(--pink);
+    font-family: var(--serif); font-style: italic; font-size: 22px; line-height: 1.4; color: var(--ink);
+  }
+  .article pre {
+    background: var(--code-bg); color: var(--code-fg); padding: 18px; overflow-x: auto;
+    font-size: 14px; line-height: 1.5; border: 2px solid var(--ink);
+  }
+  .article code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .9em; background: var(--code-inline); padding: 1px 5px; }
+  .article pre code { background: none; padding: 0; color: inherit; }
+  .article ul, .article ol { padding-left: 1.3em; margin: 0 0 1.15em; }
+  .article li { margin-bottom: .45em; }
+  .read-original {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 36px;
+    border: 2px solid var(--ink); background: var(--ink); color: var(--cream);
+    padding: 13px 22px; font-weight: 700; font-size: 14px; text-decoration: none;
+    transition: background .15s;
+  }
+  .read-original:hover { background: var(--blue); }
+
+  /* ---------- MODAL ---------- */
+  .modal-wrap {
+    position: fixed; inset: 0; z-index: 80; display: none;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-wrap.show { display: flex; }
+  .modal {
+    width: min(520px, 100%); background: var(--cream); border: 3px solid var(--ink);
+    box-shadow: 10px 10px 0 var(--ink);
+    max-height: 90vh; overflow-y: auto;
+    animation: pop .22s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes pop { from { transform: scale(.92) translateY(10px); opacity: 0; } }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 3px solid var(--ink); }
+  .modal-head h2 { font-family: var(--serif); font-weight: 900; font-size: 26px; margin: 0; }
+  .modal-body { padding: 24px; }
+  .field { margin-bottom: 18px; }
+  .field label { display: block; margin-bottom: 7px; }
+  .field input[type=text], .field input[type=url], .field select {
+    width: 100%; border: 2px solid var(--ink); background: var(--paper);
+    padding: 11px 13px; font-family: var(--sans); font-size: 14px; color: var(--ink);
+  }
+  .field input:focus, .field select:focus { outline: 3px solid var(--yellow); outline-offset: 0; }
+  .field .hint { color: var(--muted); font-size: 12px; margin-top: 5px; }
+  .row2 { display: flex; gap: 12px; }
+  .row2 > * { flex: 1; }
+
+  .preview-box {
+    border: 2px dashed var(--ink); background: var(--paper); padding: 14px;
+    display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+  }
+  .preview-box img { width: 38px; height: 38px; border: 2px solid var(--ink); border-radius: 4px; flex-shrink:0; background:#eee; }
+  .preview-box .pv-title { font-family: var(--serif); font-weight: 600; font-size: 17px; line-height: 1.1; }
+  .preview-box .pv-sub { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .preview-box.error { border-color: var(--pink); color: var(--pink); border-style: solid; }
+
+  .swatches { display: flex; gap: 9px; flex-wrap: wrap; }
+  .swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--ink); position: relative; }
+  .swatch.sel::after { content:"✓"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:14px; text-shadow:0 1px 2px rgba(0,0,0,.4); }
+
+  .modal-foot { display: flex; gap: 12px; justify-content: flex-end; padding: 0 24px 24px; }
+  .btn {
+    border: 2px solid var(--ink); padding: 11px 20px; font-weight: 700; font-size: 14px;
+    background: var(--paper); transition: transform .12s, box-shadow .12s;
+  }
+  .btn:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--ink); }
+  .btn.primary { background: var(--pink); color: #fff; }
+  .btn.primary:disabled { background: #ccc6ba; color: #8a8478; border-color: #8a8478; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn.ghost { background: transparent; }
+  .btn.danger { background: var(--paper); color: var(--pink); border-color: var(--pink); }
+  .btn.danger:hover { box-shadow: 3px 3px 0 var(--pink); }
+
+  /* context menu */
+  .ctx {
+    position: fixed; z-index: 90; background: var(--paper); border: 2px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--ink); min-width: 180px; display: none; overflow: hidden;
+  }
+  .ctx.show { display: block; }
+  .ctx .ctx-label { font-size: 11px; color: var(--muted); padding: 9px 14px 5px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; }
+  .ctx button {
+    display: flex; align-items:center; gap: 9px; width: 100%; text-align: left; border: none;
+    background: none; padding: 9px 14px; font-size: 13.5px; font-weight: 500; color: var(--ink);
+  }
+  .ctx button:hover { background: var(--cream); }
+  .ctx button.danger { color: var(--pink); }
+  .ctx hr { border: none; border-top: 1.5px solid var(--hr); margin: 4px 0; }
+
+  /* toast */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--cream); padding: 12px 22px; font-weight: 600; font-size: 14px;
+    z-index: 100; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s;
+    border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--yellow);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 1100px) {
+    .grid { grid-template-columns: repeat(4, 1fr); }
+    .card.hero { grid-column: span 4; }
+    .card.wide, .card.quote { grid-column: span 4; }
+    .canvas-title { font-size: 42px; }
+  }
+  @media (max-width: 760px) {
+    .hamburger { display: flex; }
+    .collapse-btn { display: none; }
+    .brand { font-size: 26px; }
+    .subheader { padding: 8px 16px; gap: 10px; }
+    .sidebar {
+      position: fixed; top: 0; left: 0; height: 100vh; z-index: 65;
+      margin-left: calc(-1 * var(--sidebar-w) - 3px);
+      box-shadow: 8px 0 30px rgba(0,0,0,.2);
+    }
+    .sidebar.drawer-open { margin-left: 0; }
+    .canvas { padding: 22px 18px 80px; }
+    .canvas-title { font-size: 32px; max-width: 100%; }
+    .grid { grid-template-columns: 1fr; gap: 22px; }
+    .card.hero, .card.side, .card.sec, .card.wide, .card.text, .card.small, .card.quote, .skel, .skel.big { grid-column: span 1; grid-row: auto; }
+    .card.hero h3 { font-size: 30px; }
+    .reader { width: 100vw; border-left: none; }
+    .chiprow { gap: 6px; }
+    .refresh-btn span { display: none; }
+    .refresh-btn { padding: 0 12px; }
+    .topbar-tools { gap: 8px; }
+    .cg-btn { padding: 0 10px; }
+    .tb-divider { display: none; }
+  }
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <h1 class="brand" id="brand">Press<span class="ity">room</span></h1>
+    <div class="topbar-tools">
+      <button class="refresh-btn" id="refreshBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        <span id="refreshLabel" data-i18n="refresh">Segarkan</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="subheader">
+    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span></button>
+    <button class="collapse-btn" id="collapseBtn" aria-label="Sembunyikan panel" title="Sembunyikan panel samping">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1"/><line x1="9" y1="4" x2="9" y2="20"/></svg>
+    </button>
+    <div class="chiprow" id="chiprow"></div>
+  </div>
+
+  <div class="body-wrap">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sb-scroll">
+        <div class="sb-section-label meta" data-i18n="views">Tampilan</div>
+        <div id="smartViews"></div>
+        <div class="sb-section-label spaced meta">
+          <span data-i18n="categories">Kategori</span>
+          <button class="sb-mini-add" id="addCatBtn" data-i18n="new_short">+ Baru</button>
+        </div>
+        <div id="catList"></div>
+      </div>
+      <div class="sidebar-foot">
+        <div class="control-group sidebar-cg" id="topTools" role="group" aria-label="Language">
+          <button type="button" class="cg-btn lang on" data-lang="id">ID</button>
+          <button type="button" class="cg-btn lang" data-lang="en">EN</button>
+        </div>
+        <button type="button" class="icon-btn theme-sb" id="themeBtn" aria-label="Toggle theme" title="Mode gelap">
+          <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CANVAS -->
+    <main class="canvas" id="canvas">
+      <div class="canvas-head">
+        <div>
+          <h2 class="canvas-title" id="canvasTitle">Semua Cerita</h2>
+          <div class="canvas-sub meta" id="canvasSub"></div>
+        </div>
+      </div>
+      <hr class="canvas-rule" />
+      <div id="content"></div>
+    </main>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fab" aria-label="Tambah feed">+</button>
+
+<!-- READER -->
+<div class="scrim" id="readerScrim"></div>
+<section class="reader" id="reader" aria-hidden="true">
+  <div class="reader-bar">
+    <button class="icon-btn star" id="readerStar" aria-label="Bintangi">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    </button>
+    <div class="rb-spacer"></div>
+    <button class="icon-btn" id="readerClose" aria-label="Tutup">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="reader-scroll" id="readerScroll"></div>
+</section>
+
+<!-- ADD/EDIT FEED MODAL -->
+<div class="modal-wrap" id="feedModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="feedModalTitle">Tambah Feed</h2>
+      <button class="icon-btn" id="feedModalClose" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label class="meta" for="feedUrl" data-i18n="f_url">URL Feed RSS</label>
+        <input type="url" id="feedUrl" placeholder="https://contoh.com/feed" autocomplete="off" />
+        <div class="hint" data-i18n="f_url_hint">Tempel URL RSS/Atom, lalu kami validasi.</div>
+      </div>
+      <div id="previewSlot"></div>
+      <div class="field">
+        <label class="meta" for="feedName"><span data-i18n="f_name">Nama Kustom</span> <span style="text-transform:none;font-weight:400;color:var(--muted)" data-i18n="optional">(opsional)</span></label>
+        <input type="text" id="feedName" placeholder="Otomatis dari feed" data-i18n-ph="f_name_ph" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label class="meta" for="feedCat" data-i18n="category">Kategori</label>
+        <select id="feedCat"></select>
+      </div>
+      <div class="field hide" id="newCatField">
+        <label class="meta" for="newCatName" data-i18n="f_newcat_name">Nama kategori baru</label>
+        <input type="text" id="newCatName" placeholder="mis. Sains" data-i18n-ph="newcat_ph" autocomplete="off" />
+        <div class="swatches" id="newCatSwatches" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="feedCancel" data-i18n="cancel">Batal</button>
+      <button class="btn primary" id="feedSave" data-i18n="save_feed" disabled>Simpan Feed</button>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="modal-wrap" id="catModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="catModalTitle">Kategori Baru</h2>
+      <button class="icon-btn" id="catModalClose" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label class="meta" for="catName" data-i18n="name">Nama</label>
+        <input type="text" id="catName" placeholder="mis. Politik" data-i18n-ph="cat_ph" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label class="meta" data-i18n="color">Warna</label>
+        <div class="swatches" id="catSwatches"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn danger hide" id="catDelete" data-i18n="delete">Hapus</button>
+      <div style="flex:1"></div>
+      <button class="btn ghost" id="catCancel" data-i18n="cancel">Batal</button>
+      <button class="btn primary" id="catSave" data-i18n="save" disabled>Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- context menu -->
+<div class="ctx" id="ctxMenu"></div>
+<!-- toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================================================================
+   PRESSROOM — editorial RSS reader
+   Vanilla JS · localStorage("pressroom.v1") · rss2json · DOMPurify
+   =================================================================== */
+(function () {
+  "use strict";
+
+  const STORE_KEY = "pressroom.v1";
+  const RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
+
+  /* ---- category color palette ---- */
+  const PALETTE = [
+    "#FF3366", "#0066FF", "#0F5132", "#FFD600",
+    "#C026D3", "#EA580C", "#0891B2", "#65A30D",
+  ];
+
+  /* ---- default seed ---- */
+  function seed() {
+    return {
+      categories: [
+        { id: "c-tech", name: "Teknologi", color: "#0066FF" },
+        { id: "c-design", name: "Desain", color: "#FF3366" },
+      ],
+      feeds: [
+        { id: "f-verge", url: "https://www.theverge.com/rss/index.xml", name: "The Verge", category: "c-tech", error: null },
+        { id: "f-ars", url: "https://feeds.arstechnica.com/arstechnica/index", name: "Ars Technica", category: "c-tech", error: null },
+        { id: "f-smashing", url: "https://www.smashingmagazine.com/feed/", name: "Smashing Magazine", category: "c-design", error: null },
+      ],
+      read: [],
+      starred: [],
+      lang: "id",
+      theme: "light",
+      version: 1,
+    };
+  }
+
+  /* ---- state ---- */
+  let store = load();
+  let posts = [];                 // flattened, fetched this session
+  let activeView = "all";         // 'all' | 'unread' | 'starred' | category id
+  let loadingFeeds = new Set();   // feed ids currently fetching
+  let editingFeedId = null;       // feed modal edit mode
+  let editingCatId = null;        // cat modal edit mode
+  let pendingPreview = null;      // validated feed preview before save
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return seed();
+      const d = JSON.parse(raw);
+      if (!d.feeds || !d.categories) return seed();
+      d.read = d.read || [];
+      d.starred = d.starred || [];
+      d.lang = d.lang || "id";
+      d.theme = d.theme || "light";
+      return d;
+    } catch (e) { return seed(); }
+  }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
+  }
+
+  /* ===================================================================
+     I18N — bilingual UI (Indonesian / English)
+     =================================================================== */
+  const I18N = {
+    id: {
+      refresh: "Segarkan", loading: "Memuat…", views: "Tampilan", categories: "Kategori",
+      new_short: "+ Baru", add_feed: "Tambah Feed", f_url: "URL Feed RSS",
+      f_url_hint: "Tempel URL RSS/Atom, lalu kami validasi.", f_name: "Nama Kustom",
+      optional: "(opsional)", f_name_ph: "Otomatis dari feed", category: "Kategori",
+      f_newcat_name: "Nama kategori baru", newcat_ph: "mis. Sains", cancel: "Batal",
+      save_feed: "Simpan Feed", save: "Simpan", name: "Nama", color: "Warna", delete: "Hapus",
+      cat_ph: "mis. Politik", uncategorized: "Tanpa kategori", no_cats: "Belum ada kategori.",
+      untitled: "(Tanpa judul)", general: "Umum", by: "Oleh", read_original: "Baca artikel asli",
+      no_preview: "Pratinjau penuh tidak tersedia untuk feed ini. Buka artikel asli untuk membaca selengkapnya.",
+      title_all: "Semua Cerita", title_unread: "Belum Dibaca", title_starred: "Berbintang", title_story: "Cerita",
+      sv_all: "Semua", sv_unread: "Belum dibaca", sv_starred: "Berbintang",
+      empty_title: "Mejanya masih kosong.",
+      empty_body: "Tambahkan feed RSS pertama Anda dan biarkan kisah-kisah terbaik mengalir ke meja redaksi.",
+      empty_cta: "+ Tambah feed pertama", quiet_title: "Sunyi di sini.",
+      no_posts: "Tidak ada cerita di tampilan ini.", all_read: "Semua sudah dibaca. Kerja bagus!",
+      no_starred: "Belum ada cerita berbintang. Tekan ★ pada kartu untuk menyimpan.",
+      loading_feeds: "Memuat feed…", modal_add_feed: "Tambah Feed", modal_edit_feed: "Edit Feed",
+      newcat_opt: "+ Kategori baru…", cat_new_title: "Kategori Baru", cat_edit_title: "Edit Kategori",
+      validating: "Memvalidasi…", invalid_feed: "Bukan feed RSS yang valid", check_url: "Periksa kembali URL feed.",
+      err_unreadable: "Feed tidak dapat dibaca", err_failed: "Gagal memuat",
+      edit_feed: "✎ Edit feed", move_to_cat: "Pindah ke kategori", del_feed: "🗑 Hapus feed",
+      feed_opts: "Opsi feed", edit_cat: "Edit kategori",
+      feed_updated: "Feed diperbarui", feed_added: "Feed ditambahkan", feed_dup: "Feed itu sudah ada",
+      feed_deleted: "Feed dihapus", cat_deleted: "Kategori dihapus", name_cat_first: "Beri nama kategori baru dulu",
+      collapse_hide: "Sembunyikan panel samping", collapse_show: "Tampilkan panel samping",
+      theme_dark: "Mode gelap", theme_light: "Mode terang",
+      stories: (n) => n + " cerita", articles: (n) => n + " artikel", updated: (s) => "Diperbarui " + s,
+      feeds_failed: (n) => n + " feed gagal dimuat — lihat titik merah di sidebar",
+      confirm_del_feed: (name) => "Hapus feed “" + name + "”?",
+      confirm_del_cat: (name, n) => "Hapus kategori “" + name + "”?" + (n ? " " + n + " feed akan menjadi tanpa kategori." : ""),
+    },
+    en: {
+      refresh: "Refresh", loading: "Loading…", views: "Views", categories: "Categories",
+      new_short: "+ New", add_feed: "Add Feed", f_url: "RSS Feed URL",
+      f_url_hint: "Paste an RSS/Atom URL and we'll validate it.", f_name: "Custom Name",
+      optional: "(optional)", f_name_ph: "Auto from feed", category: "Category",
+      f_newcat_name: "New category name", newcat_ph: "e.g. Science", cancel: "Cancel",
+      save_feed: "Save Feed", save: "Save", name: "Name", color: "Color", delete: "Delete",
+      cat_ph: "e.g. Politics", uncategorized: "Uncategorized", no_cats: "No categories yet.",
+      untitled: "(Untitled)", general: "General", by: "By", read_original: "Read the original",
+      no_preview: "A full preview isn't available for this feed. Open the original article to read more.",
+      title_all: "All Stories", title_unread: "Unread", title_starred: "Starred", title_story: "Stories",
+      sv_all: "All", sv_unread: "Unread", sv_starred: "Starred",
+      empty_title: "Your desk is empty.",
+      empty_body: "Add your first RSS feed and let the best stories flow onto your newsroom desk.",
+      empty_cta: "+ Add your first feed", quiet_title: "Quiet here.",
+      no_posts: "No stories in this view.", all_read: "All caught up. Nice work!",
+      no_starred: "No starred stories yet. Tap ★ on a card to save it.",
+      loading_feeds: "Fetching feeds…", modal_add_feed: "Add Feed", modal_edit_feed: "Edit Feed",
+      newcat_opt: "+ New category…", cat_new_title: "New Category", cat_edit_title: "Edit Category",
+      validating: "Validating…", invalid_feed: "Not a valid RSS feed", check_url: "Double-check the feed URL.",
+      err_unreadable: "Feed could not be read", err_failed: "Failed to load",
+      edit_feed: "✎ Edit feed", move_to_cat: "Move to category", del_feed: "🗑 Delete feed",
+      feed_opts: "Feed options", edit_cat: "Edit category",
+      feed_updated: "Feed updated", feed_added: "Feed added", feed_dup: "That feed already exists",
+      feed_deleted: "Feed deleted", cat_deleted: "Category deleted", name_cat_first: "Name the new category first",
+      collapse_hide: "Hide side panel", collapse_show: "Show side panel",
+      theme_dark: "Dark mode", theme_light: "Light mode",
+      stories: (n) => n + (n === 1 ? " story" : " stories"), articles: (n) => n + (n === 1 ? " article" : " articles"),
+      updated: (s) => "Updated " + s,
+      feeds_failed: (n) => n + (n === 1 ? " feed" : " feeds") + " failed to load — see the red dots in the sidebar",
+      confirm_del_feed: (name) => "Delete feed “" + name + "”?",
+      confirm_del_cat: (name, n) => "Delete category “" + name + "”?" + (n ? " " + n + (n === 1 ? " feed" : " feeds") + " will become uncategorized." : ""),
+    },
+  };
+  function t(key, ...args) {
+    const dict = I18N[store.lang] || I18N.id;
+    let v = dict[key];
+    if (v === undefined) v = I18N.id[key];
+    if (v === undefined) return key;
+    return typeof v === "function" ? v(...args) : v;
+  }
+
+  /* ---- helpers ---- */
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
+  const esc = (s) => (s == null ? "" : String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])));
+  const uid = (p) => p + "-" + Math.random().toString(36).slice(2, 9);
+  const catById = (id) => store.categories.find(c => c.id === id);
+  const feedById = (id) => store.feeds.find(f => f.id === id);
+  const postKey = (p) => p.guid || p.link || (p.title + p.pubDate);
+  const isRead = (p) => store.read.includes(postKey(p));
+  const isStarred = (p) => store.starred.includes(postKey(p));
+  const domainOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; } };
+  const faviconFor = (u) => "https://www.google.com/s2/favicons?sz=64&domain=" + encodeURIComponent(domainOf(u) || u);
+
+  /* ---- relative time (locale-aware) ---- */
+  let rtf = new Intl.RelativeTimeFormat(store.lang === "en" ? "en" : "id-ID", { numeric: "auto" });
+  function relTime(dateStr) {
+    if (!dateStr) return "";
+    const t = new Date(dateStr).getTime();
+    if (isNaN(t)) return "";
+    const diff = (t - Date.now()) / 1000; // seconds, negative for past
+    const abs = Math.abs(diff);
+    const units = [
+      ["year", 31536000], ["month", 2592000], ["week", 604800],
+      ["day", 86400], ["hour", 3600], ["minute", 60], ["second", 1],
+    ];
+    for (const [unit, s] of units) {
+      if (abs >= s || unit === "second") return rtf.format(Math.round(diff / s), unit);
+    }
+    return "";
+  }
+
+  function stripHtml(html) {
+    const d = document.createElement("div");
+    d.innerHTML = html || "";
+    return (d.textContent || "").replace(/\s+/g, " ").trim();
+  }
+  function excerptOf(p, len) {
+    const txt = stripHtml(p.description || p.content || "");
+    return txt.length > len ? txt.slice(0, len).replace(/\s+\S*$/, "") + "…" : txt;
+  }
+  function firstImage(p) {
+    if (p.thumbnail) return p.thumbnail;
+    if (p.enclosure && p.enclosure.link && /\.(jpg|jpeg|png|webp|gif|avif)/i.test(p.enclosure.link)) return p.enclosure.link;
+    const html = p.content || p.description || "";
+    const m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+    return m ? m[1] : null;
+  }
+
+  /* ===================================================================
+     RENDER: SIDEBAR
+     =================================================================== */
+  const SMART = [
+    { id: "all", label: "Semua", icon: '<path d="M3 9 12 2l9 7v11a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>' },
+    { id: "unread", label: "Belum dibaca", icon: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none"/>' },
+    { id: "starred", label: "Berbintang", icon: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>' },
+  ];
+
+  function countFor(view) {
+    if (view === "all") return posts.filter(p => !p._hiddenErr).length;
+    if (view === "unread") return posts.filter(p => !isRead(p)).length;
+    if (view === "starred") return posts.filter(p => isStarred(p)).length;
+    // category
+    const feedIds = store.feeds.filter(f => f.category === view).map(f => f.id);
+    return posts.filter(p => feedIds.includes(p._feedId)).length;
+  }
+
+  function renderSidebar() {
+    // smart views
+    const sv = $("#smartViews");
+    sv.innerHTML = "";
+    SMART.forEach(v => {
+      const n = el("div", "nav-item" + (activeView === v.id ? " active" : ""));
+      n.innerHTML =
+        '<svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">' + v.icon + '</svg>' +
+        '<span class="ni-label">' + t("sv_" + v.id) + '</span>' +
+        '<span class="ni-count">' + countFor(v.id) + '</span>';
+      n.onclick = () => setView(v.id);
+      sv.appendChild(n);
+    });
+
+    // categories + their feeds
+    const cl = $("#catList");
+    cl.innerHTML = "";
+    if (store.categories.length === 0) {
+      cl.appendChild(el("div", "", '<div style="color:var(--muted);font-size:12.5px;padding:6px 8px">' + t("no_cats") + '</div>'));
+    }
+    store.categories.forEach(cat => {
+      const n = el("div", "nav-item" + (activeView === cat.id ? " active" : ""));
+      n.innerHTML =
+        '<span class="cat-dot" style="background:' + cat.color + '"></span>' +
+        '<span class="ni-label">' + esc(cat.name) + '</span>' +
+        '<button class="cat-edit" title="' + t("edit_cat") + '">✎</button>' +
+        '<span class="ni-count">' + countFor(cat.id) + '</span>';
+      n.onclick = (e) => { if (e.target.closest(".cat-edit")) return; setView(cat.id); };
+      n.querySelector(".cat-edit").onclick = (e) => { e.stopPropagation(); openCatModal(cat.id); };
+      cl.appendChild(n);
+
+      // feeds in category
+      store.feeds.filter(f => f.category === cat.id).forEach(f => cl.appendChild(feedRow(f)));
+    });
+
+    // uncategorized feeds
+    const orphan = store.feeds.filter(f => !catById(f.category));
+    if (orphan.length) {
+      cl.appendChild(el("div", "sb-section-label meta", t("uncategorized")));
+      orphan.forEach(f => cl.appendChild(feedRow(f)));
+    }
+  }
+
+  function feedRow(f) {
+    const row = el("div", "feed-item");
+    const loading = loadingFeeds.has(f.id);
+    row.innerHTML =
+      '<img src="' + faviconFor(f.url) + '" alt="" onerror="this.style.visibility=\'hidden\'" />' +
+      '<span class="fi-name">' + esc(f.name) + '</span>' +
+      (loading ? '<span style="font-size:11px;color:var(--blue)">…</span>' : '') +
+      (f.error ? '<span class="err-dot" title="' + esc(f.error) + '"></span>' : '') +
+      '<button class="fi-menu-btn" title="' + t("feed_opts") + '">⋯</button>';
+    row.querySelector(".fi-menu-btn").onclick = (e) => { e.stopPropagation(); openFeedMenu(e.currentTarget, f); };
+    return row;
+  }
+
+  /* ===================================================================
+     RENDER: TOP CHIP ROW
+     =================================================================== */
+  function renderChips() {
+    const cr = $("#chiprow");
+    cr.innerHTML = "";
+    const mk = (id, label, color) => {
+      const c = el("button", "chip" + (activeView === id ? " active" : ""));
+      c.innerHTML = (color ? '<span class="dot" style="background:' + color + '"></span>' : "") + esc(label);
+      c.onclick = () => setView(id);
+      return c;
+    };
+    cr.appendChild(mk("all", t("sv_all")));
+    store.categories.forEach(cat => cr.appendChild(mk(cat.id, cat.name, cat.color)));
+  }
+
+  /* ===================================================================
+     RENDER: MAIN CANVAS
+     =================================================================== */
+  function viewTitle() {
+    if (activeView === "all") return t("title_all");
+    if (activeView === "unread") return t("title_unread");
+    if (activeView === "starred") return t("title_starred");
+    const c = catById(activeView); return c ? c.name : t("title_story");
+  }
+
+  function filteredPosts() {
+    let list = posts.slice();
+    if (activeView === "unread") list = list.filter(p => !isRead(p));
+    else if (activeView === "starred") list = list.filter(p => isStarred(p));
+    else if (activeView !== "all") {
+      const feedIds = store.feeds.filter(f => f.category === activeView).map(f => f.id);
+      list = list.filter(p => feedIds.includes(p._feedId));
+    }
+    list.sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
+    return list;
+  }
+
+  function render() {
+    renderChips();
+    renderSidebar();
+    $("#canvasTitle").textContent = viewTitle();
+
+    const content = $("#content");
+    content.innerHTML = "";
+
+    // empty: no feeds at all
+    if (store.feeds.length === 0) {
+      $("#canvasSub").textContent = "";
+      content.appendChild(emptyState());
+      return;
+    }
+
+    // loading + nothing yet
+    if (loadingFeeds.size > 0 && posts.length === 0) {
+      $("#canvasSub").textContent = t("loading_feeds");
+      content.appendChild(skeletonGrid());
+      return;
+    }
+
+    const list = filteredPosts();
+    const total = list.length;
+    const stamp = store.lastRefresh ? t("updated", relTime(store.lastRefresh)) : "";
+    $("#canvasSub").textContent = t("stories", total) + (stamp ? " · " + stamp : "");
+
+    if (total === 0) {
+      content.appendChild(noPostsState());
+      if (loadingFeeds.size > 0) content.appendChild(skeletonGrid());
+      return;
+    }
+
+    content.appendChild(magazineGrid(list));
+  }
+
+  function magazineGrid(list) {
+    const grid = el("div", "grid");
+    let quoteSlots = 0;
+
+    list.forEach((p, i) => {
+      let type;
+      if (i === 0) type = "hero";
+      else if (i === 1) type = "side";
+      else if (i === 2) type = "side";
+      else if (i === 3) type = "sec";
+      else if (i === 4) type = "sec";
+      else if (i === 5) type = "sec";
+      else {
+        // mosaic rhythm
+        const r = (i - 6) % 7;
+        if (r === 2 && quoteSlots < 6) { type = "quote"; quoteSlots++; }
+        else if (r === 0) type = "wide";
+        else if (r === 4) type = "text";
+        else if (r === 6) type = "small";
+        else type = "sec";
+      }
+      // text-led if no image (except hero/quote)
+      const img = firstImage(p);
+      if (!img && type !== "quote" && type !== "hero") type = "text";
+      grid.appendChild(card(p, type, img));
+    });
+    return grid;
+  }
+
+  function card(p, type, img) {
+    const feed = feedById(p._feedId);
+    const cat = feed ? catById(feed.category) : null;
+    const accent = cat ? cat.color : "#111";
+    const c = el("div", "card " + type + (isRead(p) ? " is-read" : ""));
+    c.style.setProperty("--accent", accent);
+    const catName = cat ? cat.name : t("general");
+    const src = (feed && feed.name) || p._source || "";
+    const time = relTime(p.pubDate);
+    const metaLine = '<span class="meta src-meta">' + esc(catName) + ' · ' + esc(src) + (time ? ' · ' + esc(time) : "") + '</span>';
+
+    if (type === "quote") {
+      const lite = accent.toUpperCase() === "#FFD600";
+      c.className = "card quote" + (lite ? " lite" : "") + (isRead(p) ? " is-read" : "");
+      c.innerHTML =
+        '<div class="qmark">“</div>' +
+        '<h3>' + esc(excerptOf(p, 130) || p.title) + '</h3>' +
+        '<div class="byline meta">' + esc(src) + (time ? ' · ' + esc(time) : "") + '</div>';
+      c.onclick = () => openReader(p);
+      return c;
+    }
+
+    const thumb = img
+      ? '<div class="thumb" style="background-image:url(\'' + esc(img) + '\')"></div>'
+      : "";
+    const tag = '<span class="tag-pill">' + esc(catName) + '</span>';
+    const excerpt = (type === "hero" || type === "wide" || type === "text")
+      ? '<p class="excerpt">' + esc(excerptOf(p, type === "hero" ? 180 : 110)) + '</p>' : "";
+
+    c.innerHTML =
+      starButton(p) +
+      thumb +
+      '<div class="kicker">' + tag + metaLine + '</div>' +
+      '<h3>' + esc(p.title || t("untitled")) + '</h3>' +
+      excerpt;
+    c.onclick = (e) => { if (e.target.closest(".star-btn")) return; openReader(p); };
+    c.querySelector(".star-btn").onclick = (e) => { e.stopPropagation(); toggleStar(p); };
+    return c;
+  }
+
+  function starButton(p) {
+    const on = isStarred(p);
+    return '<button class="star-btn' + (on ? " on" : "") + '" aria-label="Bintangi">' +
+      '<svg viewBox="0 0 24 24" fill="' + (on ? "var(--ink)" : "none") + '" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+      '</button>';
+  }
+
+  function skeletonGrid() {
+    const g = el("div", "grid");
+    const layout = ["big", "", "", "", "", "", "", ""];
+    layout.forEach(extra => {
+      const s = el("div", "skel " + extra);
+      s.innerHTML =
+        '<div class="sk-img skeleton-anim"></div>' +
+        '<div class="sk-line w40 skeleton-anim"></div>' +
+        '<div class="sk-line skeleton-anim"></div>' +
+        '<div class="sk-line w70 skeleton-anim"></div>';
+      g.appendChild(s);
+    });
+    return g;
+  }
+
+  function emptyState() {
+    const e = el("div", "empty");
+    e.innerHTML = illustration() +
+      '<h2>' + t("empty_title") + '</h2>' +
+      '<p>' + t("empty_body") + '</p>' +
+      '<button class="cta">' + t("empty_cta") + '</button>';
+    e.querySelector(".cta").onclick = () => openFeedModal();
+    return e;
+  }
+  function noPostsState() {
+    const e = el("div", "empty");
+    let msg = t("no_posts");
+    if (activeView === "unread") msg = t("all_read");
+    if (activeView === "starred") msg = t("no_starred");
+    e.innerHTML = illustration() + '<h2>' + t("quiet_title") + '</h2><p>' + msg + '</p>';
+    return e;
+  }
+  function illustration() {
+    return '<svg width="150" height="120" viewBox="0 0 150 120" fill="none" aria-hidden="true" style="color:var(--ink)">' +
+      '<rect x="20" y="26" width="92" height="78" fill="#FFD600" stroke="currentColor" stroke-width="3"/>' +
+      '<rect x="34" y="14" width="92" height="78" fill="var(--paper)" stroke="currentColor" stroke-width="3"/>' +
+      '<line x1="44" y1="32" x2="116" y2="32" stroke="currentColor" stroke-width="3"/>' +
+      '<rect x="44" y="42" width="34" height="26" fill="#FF3366" stroke="currentColor" stroke-width="3"/>' +
+      '<line x1="84" y1="44" x2="116" y2="44" stroke="currentColor" stroke-width="3"/>' +
+      '<line x1="84" y1="52" x2="116" y2="52" stroke="currentColor" stroke-width="3"/>' +
+      '<line x1="84" y1="60" x2="110" y2="60" stroke="currentColor" stroke-width="3"/>' +
+      '<line x1="44" y1="76" x2="116" y2="76" stroke="#0066FF" stroke-width="3"/>' +
+      '<line x1="44" y1="82" x2="100" y2="82" stroke="currentColor" stroke-width="3"/>' +
+      '<circle cx="118" cy="92" r="15" fill="#0066FF" stroke="currentColor" stroke-width="3"/>' +
+      '<path d="M118 86v12M112 92h12" stroke="#fff" stroke-width="3" stroke-linecap="round"/>' +
+      '</svg>';
+  }
+
+  /* ===================================================================
+     READER PANE
+     =================================================================== */
+  let readerPost = null;
+  function openReader(p) {
+    readerPost = p;
+    const k = postKey(p);
+    if (!store.read.includes(k)) { store.read.push(k); save(); }
+
+    const feed = feedById(p._feedId);
+    const cat = feed ? catById(feed.category) : null;
+    const accent = cat ? cat.color : "#111";
+    const src = (feed && feed.name) || p._source || domainOf(p.link);
+    const time = relTime(p.pubDate);
+    const heroImg = firstImage(p);
+
+    const rawHtml = p.content && p.content.length > (p.description || "").length ? p.content : (p.description || p.content || "");
+    let clean = DOMPurify.sanitize(rawHtml, {
+      ALLOWED_TAGS: ["p", "a", "b", "strong", "i", "em", "u", "h1", "h2", "h3", "h4", "blockquote", "ul", "ol", "li", "img", "figure", "figcaption", "pre", "code", "br", "hr", "span", "table", "thead", "tbody", "tr", "td", "th"],
+      ALLOWED_ATTR: ["href", "src", "alt", "title", "target", "rel"],
+      ADD_ATTR: ["target"],
+    });
+    // remove a leading duplicate hero image inside content if same as heroImg
+    if (!stripHtml(clean)) clean = "<p style='color:var(--muted)'>" + t("no_preview") + "</p>";
+
+    const scroll = $("#readerScroll");
+    scroll.innerHTML =
+      '<div class="reader-kicker">' +
+        '<span class="tag-pill" style="background:' + accent + '">' + esc(cat ? cat.name : t("general")) + '</span>' +
+        '<span class="meta src-meta">' + esc(src) + (time ? ' · ' + esc(time) : "") + '</span>' +
+      '</div>' +
+      '<h1>' + esc(p.title || t("untitled")) + '</h1>' +
+      '<div class="reader-byline">' + (p.author ? t("by") + " " + esc(p.author) + " · " : "") + esc(domainOf(p.link)) + '</div>' +
+      (heroImg ? '<img class="reader-hero" src="' + esc(heroImg) + '" alt="" onerror="this.style.display=\'none\'" />' : "") +
+      '<div class="article" id="articleBody"></div>' +
+      '<a class="read-original" href="' + esc(p.link) + '" target="_blank" rel="noopener noreferrer">' + t("read_original") + ' ' +
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></a>';
+
+    const body = $("#articleBody");
+    body.innerHTML = clean;
+    // open links in new tab + strip duplicate hero
+    $$("#articleBody a").forEach(a => { a.target = "_blank"; a.rel = "noopener noreferrer"; });
+    const firstImgEl = body.querySelector("img");
+    if (firstImgEl && heroImg && firstImgEl.src === heroImg && body.firstElementChild === firstImgEl) firstImgEl.remove();
+    scroll.scrollTop = 0;
+
+    // star button state
+    const sb = $("#readerStar");
+    sb.classList.toggle("on", isStarred(p));
+
+    $("#reader").classList.add("show");
+    $("#reader").setAttribute("aria-hidden", "false");
+    $("#readerScrim").classList.add("show");
+    render(); // refresh read-state on cards/counts
+  }
+  function closeReader() {
+    $("#reader").classList.remove("show");
+    $("#reader").setAttribute("aria-hidden", "true");
+    $("#readerScrim").classList.remove("show");
+    readerPost = null;
+  }
+
+  /* ===================================================================
+     STARRING
+     =================================================================== */
+  function toggleStar(p) {
+    const k = postKey(p);
+    const i = store.starred.indexOf(k);
+    if (i >= 0) store.starred.splice(i, 1); else store.starred.push(k);
+    save();
+    if (readerPost && postKey(readerPost) === k) $("#readerStar").classList.toggle("on", isStarred(p));
+    render();
+  }
+
+  /* ===================================================================
+     FETCHING
+     =================================================================== */
+  async function fetchFeed(feed) {
+    loadingFeeds.add(feed.id);
+    renderSidebar();
+    try {
+      const res = await fetch(RSS2JSON + encodeURIComponent(feed.url));
+      const data = await res.json();
+      if (data.status !== "ok" || !data.items) throw new Error(data.message || t("err_unreadable"));
+      feed.error = null;
+      feed._title = data.feed && data.feed.title;
+      const items = data.items.map(it => ({ ...it, _feedId: feed.id, _source: (data.feed && data.feed.title) || feed.name }));
+      // merge: drop old posts from this feed, add fresh
+      posts = posts.filter(p => p._feedId !== feed.id).concat(items);
+    } catch (err) {
+      feed.error = err.message || t("err_failed");
+    } finally {
+      loadingFeeds.delete(feed.id);
+    }
+  }
+
+  async function refreshAll() {
+    if (store.feeds.length === 0) { render(); return; }
+    const btn = $("#refreshBtn");
+    btn.classList.add("spinning");
+    $("#refreshLabel").textContent = t("loading");
+    render(); // show skeletons if empty
+    await Promise.all(store.feeds.map(f => fetchFeed(f).then(() => render())));
+    store.lastRefresh = new Date().toISOString();
+    save();
+    btn.classList.remove("spinning");
+    $("#refreshLabel").textContent = t("refresh");
+    render();
+    const errs = store.feeds.filter(f => f.error).length;
+    if (errs) toast(t("feeds_failed", errs));
+  }
+
+  /* validate a single url, return preview */
+  async function validateFeed(url) {
+    const res = await fetch(RSS2JSON + encodeURIComponent(url));
+    const data = await res.json();
+    if (data.status !== "ok" || !data.feed) throw new Error(data.message || t("invalid_feed"));
+    return { title: data.feed.title || domainOf(url), url, count: (data.items || []).length, link: data.feed.link };
+  }
+
+  /* ===================================================================
+     ADD / EDIT FEED MODAL
+     =================================================================== */
+  function refreshCatSelect() {
+    const sel = $("#feedCat");
+    sel.innerHTML = "";
+    store.categories.forEach(c => {
+      const o = el("option"); o.value = c.id; o.textContent = c.name; sel.appendChild(o);
+    });
+    const o = el("option"); o.value = "__new"; o.textContent = t("newcat_opt"); sel.appendChild(o);
+  }
+
+  let newCatColor = PALETTE[0];
+  function buildNewCatSwatches() {
+    const box = $("#newCatSwatches");
+    box.innerHTML = "";
+    PALETTE.forEach((col, i) => {
+      const s = el("button", "swatch" + (i === 0 ? " sel" : ""));
+      s.style.background = col; s.dataset.col = col;
+      s.onclick = (e) => { e.preventDefault(); newCatColor = col; $$(".swatch", box).forEach(x => x.classList.remove("sel")); s.classList.add("sel"); };
+      box.appendChild(s);
+    });
+    newCatColor = PALETTE[0];
+  }
+
+  function openFeedModal(feedId) {
+    editingFeedId = feedId || null;
+    pendingPreview = null;
+    refreshCatSelect();
+    buildNewCatSwatches();
+    const titleEl = $("#feedModalTitle");
+    const urlIn = $("#feedUrl"), nameIn = $("#feedName"), catSel = $("#feedCat");
+    $("#previewSlot").innerHTML = "";
+    $("#newCatField").classList.add("hide");
+
+    if (feedId) {
+      const f = feedById(feedId);
+      titleEl.textContent = t("modal_edit_feed");
+      urlIn.value = f.url; nameIn.value = f.name;
+      catSel.value = f.category;
+      $("#feedSave").disabled = false;
+      pendingPreview = { title: f.name, url: f.url };
+    } else {
+      titleEl.textContent = t("modal_add_feed");
+      urlIn.value = ""; nameIn.value = "";
+      catSel.value = store.categories[0] ? store.categories[0].id : "__new";
+      if (catSel.value === "__new") $("#newCatField").classList.remove("hide");
+      $("#feedSave").disabled = true;
+    }
+    $("#feedModal").classList.add("show");
+    setTimeout(() => urlIn.focus(), 50);
+  }
+  function closeFeedModal() { $("#feedModal").classList.remove("show"); }
+
+  let validateTimer = null;
+  function onUrlInput() {
+    clearTimeout(validateTimer);
+    const url = $("#feedUrl").value.trim();
+    pendingPreview = null;
+    $("#feedSave").disabled = true;
+    if (!/^https?:\/\/.+\..+/.test(url)) { $("#previewSlot").innerHTML = ""; return; }
+    $("#previewSlot").innerHTML = '<div class="preview-box"><div class="skeleton-anim" style="width:38px;height:38px;border:2px solid var(--ink);background:var(--skel)"></div><div><div class="pv-title">' + t("validating") + '</div><div class="pv-sub">' + esc(domainOf(url)) + '</div></div></div>';
+    validateTimer = setTimeout(async () => {
+      try {
+        const pv = await validateFeed(url);
+        pendingPreview = pv;
+        $("#previewSlot").innerHTML =
+          '<div class="preview-box">' +
+          '<img src="' + faviconFor(url) + '" alt="" onerror="this.style.visibility=\'hidden\'"/>' +
+          '<div><div class="pv-title">' + esc(pv.title) + '</div><div class="pv-sub">' + t("articles", pv.count) + ' · ' + esc(domainOf(url)) + '</div></div>' +
+          '</div>';
+        if (!$("#feedName").value.trim()) $("#feedName").placeholder = pv.title;
+        $("#feedSave").disabled = false;
+      } catch (err) {
+        $("#previewSlot").innerHTML = '<div class="preview-box error"><strong>⚠</strong><div><div class="pv-title" style="font-family:var(--sans);font-size:14px">' + esc(err.message) + '</div><div class="pv-sub">' + t("check_url") + '</div></div></div>';
+        $("#feedSave").disabled = true;
+      }
+    }, 600);
+  }
+
+  async function saveFeed() {
+    const url = $("#feedUrl").value.trim();
+    let catId = $("#feedCat").value;
+    const customName = $("#feedName").value.trim();
+    const name = customName || (pendingPreview && pendingPreview.title) || domainOf(url);
+
+    // new category inline
+    if (catId === "__new") {
+      const cn = $("#newCatName").value.trim();
+      if (!cn) { toast(t("name_cat_first")); return; }
+      const nc = { id: uid("c"), name: cn, color: newCatColor };
+      store.categories.push(nc);
+      catId = nc.id;
+    }
+
+    if (editingFeedId) {
+      const f = feedById(editingFeedId);
+      const urlChanged = f.url !== url;
+      f.url = url; f.name = name; f.category = catId;
+      save(); closeFeedModal();
+      if (urlChanged) { posts = posts.filter(p => p._feedId !== f.id); await fetchFeed(f); store.lastRefresh = new Date().toISOString(); save(); }
+      render(); toast(t("feed_updated"));
+    } else {
+      // prevent dupes
+      if (store.feeds.some(f => f.url === url)) { toast(t("feed_dup")); return; }
+      const f = { id: uid("f"), url, name, category: catId, error: null };
+      store.feeds.push(f);
+      save(); closeFeedModal();
+      await fetchFeed(f);
+      store.lastRefresh = new Date().toISOString(); save();
+      render(); toast(t("feed_added"));
+    }
+  }
+
+  /* feed hover menu (reassign category / edit / delete) */
+  function openFeedMenu(anchor, f) {
+    const m = $("#ctxMenu");
+    let html = '<div class="ctx-label">' + esc(f.name) + '</div>';
+    html += '<button data-act="edit">' + t("edit_feed") + '</button>';
+    html += '<div class="ctx-label">' + t("move_to_cat") + '</div>';
+    store.categories.forEach(c => {
+      html += '<button data-cat="' + c.id + '"><span class="cat-dot" style="width:10px;height:10px;background:' + c.color + '"></span>' + esc(c.name) + (c.id === f.category ? " ✓" : "") + '</button>';
+    });
+    html += '<hr><button class="danger" data-act="del">' + t("del_feed") + '</button>';
+    m.innerHTML = html;
+    m.querySelectorAll("button").forEach(b => {
+      b.onclick = () => {
+        if (b.dataset.cat) { f.category = b.dataset.cat; save(); render(); }
+        else if (b.dataset.act === "edit") openFeedModal(f.id);
+        else if (b.dataset.act === "del") {
+          if (confirm(t("confirm_del_feed", f.name))) { store.feeds = store.feeds.filter(x => x.id !== f.id); posts = posts.filter(p => p._feedId !== f.id); save(); render(); toast(t("feed_deleted")); }
+        }
+        hideCtx();
+      };
+    });
+    positionCtx(m, anchor);
+  }
+
+  /* ===================================================================
+     CATEGORY MODAL
+     =================================================================== */
+  let catColor = PALETTE[0];
+  function buildCatSwatches(selected) {
+    const box = $("#catSwatches");
+    box.innerHTML = "";
+    PALETTE.forEach((col) => {
+      const s = el("button", "swatch" + (col === selected ? " sel" : ""));
+      s.style.background = col;
+      s.onclick = (e) => { e.preventDefault(); catColor = col; $$(".swatch", box).forEach(x => x.classList.remove("sel")); s.classList.add("sel"); };
+      box.appendChild(s);
+    });
+  }
+  function openCatModal(catId) {
+    editingCatId = catId || null;
+    const c = catId ? catById(catId) : null;
+    $("#catModalTitle").textContent = c ? t("cat_edit_title") : t("cat_new_title");
+    $("#catName").value = c ? c.name : "";
+    catColor = c ? c.color : PALETTE[0];
+    buildCatSwatches(catColor);
+    $("#catDelete").classList.toggle("hide", !c);
+    $("#catSave").disabled = !(c && c.name);
+    $("#catModal").classList.add("show");
+    setTimeout(() => $("#catName").focus(), 50);
+  }
+  function closeCatModal() { $("#catModal").classList.remove("show"); }
+  function saveCat() {
+    const name = $("#catName").value.trim();
+    if (!name) return;
+    if (editingCatId) {
+      const c = catById(editingCatId); c.name = name; c.color = catColor;
+    } else {
+      store.categories.push({ id: uid("c"), name, color: catColor });
+    }
+    save(); closeCatModal(); render();
+  }
+  function deleteCat() {
+    const c = catById(editingCatId); if (!c) return;
+    const n = store.feeds.filter(f => f.category === c.id).length;
+    if (!confirm(t("confirm_del_cat", c.name, n))) return;
+    store.feeds.forEach(f => { if (f.category === c.id) f.category = null; });
+    store.categories = store.categories.filter(x => x.id !== c.id);
+    if (activeView === c.id) activeView = "all";
+    save(); closeCatModal(); render(); toast(t("cat_deleted"));
+  }
+
+  /* ===================================================================
+     CONTEXT MENU positioning + global dismiss
+     =================================================================== */
+  function positionCtx(m, anchor) {
+    m.classList.add("show");
+    const r = anchor.getBoundingClientRect();
+    const mw = m.offsetWidth, mh = m.offsetHeight;
+    let x = r.left, y = r.bottom + 4;
+    if (x + mw > window.innerWidth - 8) x = window.innerWidth - mw - 8;
+    if (y + mh > window.innerHeight - 8) y = r.top - mh - 4;
+    m.style.left = x + "px"; m.style.top = y + "px";
+  }
+  function hideCtx() { $("#ctxMenu").classList.remove("show"); }
+
+  /* ===================================================================
+     VIEW SWITCH
+     =================================================================== */
+  function setView(v) {
+    activeView = v;
+    closeDrawer();
+    render();
+    $("#canvas").scrollTop = 0;
+  }
+
+  /* ---- mobile drawer ---- */
+  function openDrawer() { $("#sidebar").classList.add("drawer-open"); $("#readerScrim").classList.add("show"); document.body.dataset.drawer = "1"; }
+  function closeDrawer() { $("#sidebar").classList.remove("drawer-open"); if (document.body.dataset.drawer) { $("#readerScrim").classList.remove("show"); delete document.body.dataset.drawer; } }
+
+  /* ---- toast ---- */
+  let toastTimer = null;
+  function toast(msg) {
+    const t2 = $("#toast"); t2.textContent = msg; t2.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t2.classList.remove("show"), 3200);
+  }
+
+  /* ===================================================================
+     LANGUAGE + THEME
+     =================================================================== */
+  function applyStatic() {
+    $$("[data-i18n]").forEach(n => { n.textContent = t(n.dataset.i18n); });
+    $$("[data-i18n-ph]").forEach(n => { n.placeholder = t(n.dataset.i18nPh); });
+    $$("[data-lang]").forEach(b => b.classList.toggle("on", b.dataset.lang === store.lang));
+    const col = $("#sidebar").classList.contains("collapsed");
+    $("#collapseBtn").title = col ? t("collapse_show") : t("collapse_hide");
+    updateThemeBtn();
+    document.documentElement.lang = store.lang === "en" ? "en" : "id";
+  }
+  function updateThemeBtn() {
+    const dark = store.theme === "dark";
+    $("#themeBtn").title = dark ? t("theme_light") : t("theme_dark");
+    $("#themeIcon").innerHTML = dark
+      ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>'
+      : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  }
+  function applyTheme(theme) {
+    store.theme = theme; save();
+    if (theme === "dark") document.documentElement.setAttribute("data-theme", "dark");
+    else document.documentElement.removeAttribute("data-theme");
+    updateThemeBtn();
+  }
+  function applyLang(lang) {
+    store.lang = lang; save();
+    rtf = new Intl.RelativeTimeFormat(lang === "en" ? "en" : "id-ID", { numeric: "auto" });
+    applyStatic();
+    render();
+  }
+
+  /* ===================================================================
+     WIRE UP
+     =================================================================== */
+  function init() {
+    // language + theme (apply before first render)
+    if (store.theme === "dark") document.documentElement.setAttribute("data-theme", "dark");
+    rtf = new Intl.RelativeTimeFormat(store.lang === "en" ? "en" : "id-ID", { numeric: "auto" });
+    applyStatic();
+    $$("[data-lang]").forEach(b => {
+      b.onclick = () => { if (store.lang !== b.dataset.lang) applyLang(b.dataset.lang); };
+    });
+    $("#themeBtn").onclick = () => applyTheme(store.theme === "dark" ? "light" : "dark");
+
+    // top bar
+    $("#refreshBtn").onclick = refreshAll;
+    $("#brand").onclick = () => setView("all");
+    $("#hamburger").onclick = () => { $("#sidebar").classList.contains("drawer-open") ? closeDrawer() : openDrawer(); };
+    $("#collapseBtn").onclick = () => {
+      const collapsed = $("#sidebar").classList.toggle("collapsed");
+      $("#collapseBtn").classList.toggle("is-collapsed", collapsed);
+      $("#collapseBtn").title = collapsed ? t("collapse_show") : t("collapse_hide");
+      store.sidebarCollapsed = collapsed; save();
+    };
+    if (store.sidebarCollapsed) {
+      $("#sidebar").classList.add("collapsed");
+      $("#collapseBtn").classList.add("is-collapsed");
+    }
+
+    // sidebar
+    $("#addCatBtn").onclick = () => openCatModal();
+    $("#fab").onclick = () => openFeedModal();
+
+    // reader
+    $("#readerClose").onclick = closeReader;
+    $("#readerScrim").onclick = () => { closeReader(); closeDrawer(); };
+    $("#readerStar").onclick = () => { if (readerPost) toggleStar(readerPost); };
+
+    // feed modal
+    $("#feedModalClose").onclick = closeFeedModal;
+    $("#feedCancel").onclick = closeFeedModal;
+    $("#feedSave").onclick = saveFeed;
+    $("#feedUrl").addEventListener("input", onUrlInput);
+    $("#feedCat").addEventListener("change", (e) => { $("#newCatField").classList.toggle("hide", e.target.value !== "__new"); });
+
+    // cat modal
+    $("#catModalClose").onclick = closeCatModal;
+    $("#catCancel").onclick = closeCatModal;
+    $("#catSave").onclick = saveCat;
+    $("#catDelete").onclick = deleteCat;
+    $("#catName").addEventListener("input", (e) => { $("#catSave").disabled = !e.target.value.trim(); });
+
+    // global
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if ($("#feedModal").classList.contains("show")) closeFeedModal();
+        else if ($("#catModal").classList.contains("show")) closeCatModal();
+        else if ($("#reader").classList.contains("show")) closeReader();
+        else closeDrawer();
+        hideCtx();
+      }
+    });
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest("#ctxMenu") && !e.target.closest(".fi-menu-btn")) hideCtx();
+    });
+    // click outside modal closes
+    $$(".modal-wrap").forEach(w => w.addEventListener("mousedown", (e) => { if (e.target === w) w.classList.remove("show"); }));
+
+    render();
+    refreshAll();
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
+
+</script>
+</body>
+</html>
