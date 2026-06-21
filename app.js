@@ -7,8 +7,8 @@
 
   const STORE_KEY = "pressroom.v1";
   const RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
-  const REMOTE_FEEDS_URL = "https://cdn.jsdelivr.net/gh/farizdp/web-data-store@main/warta-rss/feeds.json";
-  const REMOTE_FEEDS_URL_FALLBACK = "https://raw.githubusercontent.com/farizdp/web-data-store/main/warta-rss/feeds.json";
+  const REMOTE_FEEDS_URL = "https://cdn.jsdelivr.net/gh/farizdp/web-data-store@main/lab-fariz-id/warta-rss/feeds.json";
+  const REMOTE_FEEDS_URL_FALLBACK = "https://raw.githubusercontent.com/farizdp/web-data-store/main/lab-fariz-id/warta-rss/feeds.json";
 
   /* ---- category color palette ---- */
   const PALETTE = [
