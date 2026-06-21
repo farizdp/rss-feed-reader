@@ -7,6 +7,7 @@
 
   const STORE_KEY = "pressroom.v1";
   const RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
+  const REMOTE_FEEDS_URL = "https://cdn.jsdelivr.net/gh/farizdwipratama/web-data-store@main/warta-rss/feeds.json";
 
   /* ---- category color palette ---- */
   const PALETTE = [
@@ -555,6 +556,45 @@
     }
   }
 
+  async function syncRemoteFeeds() {
+    try {
+      const res = await fetch(REMOTE_FEEDS_URL);
+      if (!res.ok) return;
+      const data = await res.json();
+      let changed = false;
+
+      (data.categories || []).forEach(rc => {
+        if (!store.categories.find(c => c.id === rc.id)) {
+          store.categories.push(rc);
+          changed = true;
+        }
+      });
+
+      const newFeeds = [];
+      (data.feeds || []).forEach(rf => {
+        const existing = store.feeds.find(f => f.id === rf.id);
+        if (!existing) {
+          store.feeds.push({ ...rf, error: null });
+          newFeeds.push(store.feeds[store.feeds.length - 1]);
+          changed = true;
+        } else if (existing.url !== rf.url || existing.name !== rf.name) {
+          existing.url = rf.url;
+          existing.name = rf.name || existing.name;
+          changed = true;
+        }
+      });
+
+      if (changed) {
+        save();
+        render();
+        if (newFeeds.length > 0) {
+          await Promise.all(newFeeds.map(f => fetchFeed(f).then(() => render())));
+          save();
+        }
+      }
+    } catch (e) { /* silent fail — app works with stored data */ }
+  }
+
   async function refreshAll() {
     if (store.feeds.length === 0) { render(); return; }
     const btn = $("#refreshBtn");
@@ -899,6 +939,7 @@
     $$(".modal-wrap").forEach(w => w.addEventListener("mousedown", (e) => { if (e.target === w) w.classList.remove("show"); }));
 
     render();
+    syncRemoteFeeds();
     refreshAll();
   }
 
