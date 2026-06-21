@@ -7,7 +7,8 @@
 
   const STORE_KEY = "pressroom.v1";
   const RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
-  const REMOTE_FEEDS_URL = "https://cdn.jsdelivr.net/gh/farizdwipratama/web-data-store@main/warta-rss/feeds.json";
+  const REMOTE_FEEDS_URL = "https://cdn.jsdelivr.net/gh/farizdp/web-data-store@main/warta-rss/feeds.json";
+  const REMOTE_FEEDS_URL_FALLBACK = "https://raw.githubusercontent.com/farizdp/web-data-store/main/warta-rss/feeds.json";
 
   /* ---- category color palette ---- */
   const PALETTE = [
@@ -558,7 +559,8 @@
 
   async function syncRemoteFeeds() {
     try {
-      const res = await fetch(REMOTE_FEEDS_URL);
+      let res = await fetch(REMOTE_FEEDS_URL);
+      if (!res.ok) res = await fetch(REMOTE_FEEDS_URL_FALLBACK);
       if (!res.ok) return;
       const data = await res.json();
       let changed = false;

@@ -8,7 +8,7 @@ An editorial-style RSS reader with a magazine layout. No build step — open `in
 
 - **Magazine grid layout** — articles arranged as hero, wide, and card types based on position and image availability
 - **RSS/Atom feed support** — add any RSS or Atom feed URL; validated live before saving
-- **Remote feed list** — curated feeds and categories loaded automatically from [`web-data-store`](https://github.com/farizdwipratama/web-data-store) on startup
+- **Remote feed list** — curated feeds and categories loaded automatically from [`web-data-store`](https://github.com/farizdp/web-data-store) on startup
 - **Categories** — organize feeds into color-coded categories
 - **Reader pane** — read sanitized article content in-app without leaving
 - **Star & read tracking** — bookmark articles and track what you've read
@@ -30,7 +30,7 @@ All data is stored in `localStorage` — no server or account required.
 
 The curated feed list is managed in a separate repo and loaded automatically on every page open:
 
-**Source file:** [`web-data-store/warta-rss/feeds.json`](https://github.com/farizdwipratama/web-data-store/blob/main/warta-rss/feeds.json)
+**Source file:** [`web-data-store/warta-rss/feeds.json`](https://github.com/farizdp/web-data-store/blob/main/warta-rss/feeds.json)
 
 To add, remove, or rename a feed, edit that file and push — all browsers pick it up on next load.
 
